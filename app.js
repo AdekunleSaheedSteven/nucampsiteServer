@@ -34,10 +34,65 @@ const app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
+//these are all middleware.
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+//adding Basic Authentication
+function auth(req, res, next) {
+  console.log(req.headers);
+
+  //grab authorization from request header
+  const authHeader = req.headers.authorization;
+
+  //server not getting any authorization credential from client
+  if (!authHeader) {
+    const err = new Error("You are not authenticated!");
+
+    //this let the client know the server is requesting authentication and the authentication is basic.
+    res.setHeader("WWW-Authenticate", "Basic");
+
+    // this is standard error code if credential is not provided.
+    err.status = 401;
+
+    //this will send the error message back to the client.
+    return next(err);
+  }
+
+  //if the authorization is availbale inside the header sent by the client then all below will happen. Means there is authorization header then our code will skip to below codes.
+  //the authorization header will be parse and then valid the username and password.
+  //the authorization header will contain the word BASIC then space follow by the username and password in Based-64 encoding string. Once the code is decoded it will show the username and password separate by colon.
+  //in this case we need to take out the username and password out of the HEADER string and put them into a new array.
+  //Username will hold index 1 and password will hold index 2 inside the array
+  //put the array inside const auth then use the buffer global class in Node. Since Buffer is global in Node means we do not need to REQUIRE it.
+  //the Buffer has the static method from to decode the username and password Buffer.from()
+  //the code inside Buffer.from() will pick the Based-64 encoding username and password and extract the username and password to be able to read and then put them into auth array as first and second items.
+  const auth = Buffer.from(authHeader.split(" ")[1], "base64")
+    .toString()
+    .split(":");
+
+  //grab the username and password out of the array.
+  const user = auth[0];
+  const pass = auth[1];
+
+  //this is a Basic validation
+  if (user === "admin" && pass === "password") {
+    //if successful then access is granted
+    return next(); // authorized
+
+    //if fail then will send error msg to client
+  } else {
+    const err = new Error("You are not authenticated!");
+    res.setHeader("WWW-Authenticate", "Basic");
+    err.status = 401;
+    return next(err);
+  }
+}
+
+app.use(auth);
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
