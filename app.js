@@ -3,6 +3,10 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
+//we require express-session & session-file-store to implement Express session to track user information.
+const session = require("express-session");
+//two set of parameters afte a function call: JS has first class function which mean a function can return another function.  What happen here is that when we call this function require("session-file-store") then it return another function as it value.Then we immediately call that return function with the second parameter list.
+const FileStore = require("session-file-store")(session);
 
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
@@ -38,13 +42,27 @@ app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-//providing cookie-parse with a secret key as an argument. The secret key can be any string. It doesn't has to be anything meaningful, it is just a cryptographic key that can be used by cookieParse to encrypt information and sign the cookie that sent from server to the client
-app.use(cookieParser("12345-67890-54321"));
 
-//adding Basic Authentication
+//Create "session middleware" and pass it configuration values as its parameter.
+//what you put as "name", "secret" won't matter
+//saveUninitialized: false is optional. What it means is that when a new session is created and no update is made to it and at the end of request it won't get save because it will be an empty session without any useful information and no cookies will be sent to the client. That helps to prevent of having bunch of empty session files for cookies being set up.
+//resave: false, this is saying once session is created, updated and saved, once request is made for that session, it will continue to resave even if that request did not make any update. This will keep the session active so it doesn't get deleted. This is commonly set and using it depend on the project.
+//store: new FileStore() will create a new file store as an object that we can use to save of session information to server hard-disc instead of just running application memory.
+//this middleware session will add 'session' to request property.
+app.use(
+  session({
+    name: "session-id",
+    secret: "12345-67890-09876-54321",
+    saveUninitialized: false,
+    resave: false,
+    store: new FileStore(),
+  })
+);
+
 function auth(req, res, next) {
-  //the signedCookies property of request object is provided by cookieParse.It will automatically parse signed cookies from the request. If the cookie is not properly signed then it will return a value of false. The additional property called 'user' is the property we ourselve add to the signed cookie. So if the incoming request doesn't include signedCookie.user property or the signed cookie value then it will parse as false so we know the client has not be authenticate then we challenge the client to aunthenticate.
-  if (!req.signedCookies.user) {
+  console.log(req.session);
+
+  if (!req.session.user) {
     //grab authorization from request header
     const authHeader = req.headers.authorization;
 
@@ -80,10 +98,8 @@ function auth(req, res, next) {
 
     //this is a Basic validation
     if (user === "admin" && pass === "password") {
-      //the res.cookie() method is part of Express response API. We use it to create a new cookie and pass it a name we want to use for the cookie user and this name will be used to set up a property of user on the signed cookie object.
-      //the second value will be a value to store a name property and we give it a string of 'admin'
-      //the third argument is optional, it is an object that contains configuration value. By setting '{signed: true}' we let the Express know to use the key from cookieParse to create a signed cookie. This res.cookie() method handles creation of the cookie and set it up in the server response to the client.
-      res.cookie("user", "admin", { signed: true });
+      req.session.user = "admin";
+
       //if successful then access is granted
       return next(); // authorized
 
@@ -95,7 +111,7 @@ function auth(req, res, next) {
       return next(err);
     }
   } else {
-    if (res.signedCookies.user === "admin") {
+    if (req.session.user === "admin") {
       return next();
     } else {
       const err = new Error("You are not authenticated!");
