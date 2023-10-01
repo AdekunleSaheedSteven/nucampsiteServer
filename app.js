@@ -59,59 +59,27 @@ app.use(
   })
 );
 
+//indexRouter & usesRouter are place above auth function because we want users to access them before going through authentication.
+//We have already have a way of authenticating users through users module so they do not need to be authenticated through auth function again.
+//indexRouter above auth function because we directed logout users to that path and the users logout authentication is already done in users module file too.
+app.use("/", indexRouter);
+app.use("/users", usersRouter); // This router is created by Express Generator. The file created is inside router folder
+
 function auth(req, res, next) {
   console.log(req.session);
 
+  //here we are only checking if client is not authenticated so if it doesn't then we use the error handler.
   if (!req.session.user) {
-    //grab authorization from request header
-    const authHeader = req.headers.authorization;
+    const err = new Error("You are not authenticated!");
 
-    //server not getting any authorization credential from client
-    if (!authHeader) {
-      const err = new Error("You are not authenticated!");
+    // this is standard error code if credential is not provided.
+    err.status = 401;
 
-      //this let the client know the server is requesting authentication and the authentication is basic.
-      res.setHeader("WWW-Authenticate", "Basic");
-
-      // this is standard error code if credential is not provided.
-      err.status = 401;
-
-      //this will send the error message back to the client.
-      return next(err);
-    }
-
-    //if the authorization is availbale inside the header sent by the client then all below will happen. Means there is authorization header then our code will skip to below codes.
-    //the authorization header will be parse and then valid the username and password.
-    //the authorization header will contain the word BASIC then space follow by the username and password in Based-64 encoding string. Once the code is decoded it will show the username and password separate by colon.
-    //in this case we need to take out the username and password out of the HEADER string and put them into a new array.
-    //Username will hold index 1 and password will hold index 2 inside the array
-    //put the array inside const auth then use the buffer global class in Node. Since Buffer is global in Node means we do not need to REQUIRE it.
-    //the Buffer has the static method FROM to decode the username and password Buffer.from()
-    //the code inside Buffer.from() will pick the Based-64 encoding username and password and extract the username and password to be able to read and then put them into auth array as first and second items.
-    const auth = Buffer.from(authHeader.split(" ")[1], "base64")
-      .toString()
-      .split(":");
-
-    //grab the username and password out of the array.
-    const user = auth[0];
-    const pass = auth[1];
-
-    //this is a Basic validation
-    if (user === "admin" && pass === "password") {
-      req.session.user = "admin";
-
-      //if successful then access is granted
-      return next(); // authorized
-
-      //if fail then will send error msg to client
-    } else {
-      const err = new Error("You are not authenticated!");
-      res.setHeader("WWW-Authenticate", "Basic");
-      err.status = 401;
-      return next(err);
-    }
+    //this will send the error message back to the client.
+    return next(err);
   } else {
-    if (req.session.user === "admin") {
+    //'authenticated' is the value we set for it (req.session.user) in the users router when a user login.
+    if (req.session.user === "authenticated") {
       return next();
     } else {
       const err = new Error("You are not authenticated!");
@@ -125,8 +93,6 @@ app.use(auth);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use("/campsites", campsiteRouter);
 app.use("/promotions", promotionRouter);
 app.use("/partners", partnerRouter);
