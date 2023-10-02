@@ -21,7 +21,22 @@ const Schema = mongoose.Schema;
 // module.exports = mongoose.model("User", userSchema);
 
 //we do not need username and passport again like above because passport-local-mongoose will automatically include them for us.
+// const userSchema = new Schema({
+//   admin: {
+//     type: Boolean,
+//     default: false,
+//   },
+// });
+
 const userSchema = new Schema({
+  firstname: {
+    type: String,
+    default: "",
+  },
+  lastname: {
+    type: String,
+    default: "",
+  },
   admin: {
     type: Boolean,
     default: false,
@@ -29,7 +44,7 @@ const userSchema = new Schema({
 });
 
 //the plugin will add username and password to the schema.
-//this plugin will also provide us with different authentication method on the schema
+//this plugin will also provide us with different authentication method on the schema such as authenticate() method
 userSchema.plugin(passportLocalMongoose);
 
 module.exports = mongoose.model("User", userSchema);

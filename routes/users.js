@@ -54,23 +54,60 @@ router.post("/signup", (req, res) => {
   User.register(
     new User({ username: req.body.username }),
     req.body.password,
-    (err) => {
+    (err, user) => {
       if (err) {
         res.statusCode = 500;
         res.setHeader("Content-Type", "application/json");
         res.json({ err: err });
       } else {
-        //if there is no error we then use passport to authenticate user. This ensure that registration is successful.
-        //this authenticate() method will return a function and we need to call the returning function by passing callback function that will return successful message back to the client.
-        passport.authenticate("local")(req, res, () => {
-          res.statusCode = 200;
-          res.setHeader("Content-Type", "application/json");
-          res.json({ success: true, status: "Registration Successful!" });
+        if (req.body.firstname) {
+          user.firstname = req.body.firstname;
+        }
+        if (req.body.lastname) {
+          user.lastname = req.body.lastname;
+        }
+        user.save((err) => {
+          if (err) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.json({ err: err });
+            return;
+          }
+
+          //if there is no error we then use passport to authenticate user. This ensure that registration is successful.
+          //this authenticate() method will return a function and we need to call the returning function by passing callback function that will return successful message back to the client.
+          passport.authenticate("local")(req, res, () => {
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.json({ success: true, status: "Registration Successful!" });
+          });
         });
       }
     }
   );
 });
+
+// router.post("/signup", (req, res) => {
+//   User.register(
+//     new User({ username: req.body.username }),
+//     req.body.password,
+//     (err, user) => {
+//       if (err) {
+//         res.statusCode = 500;
+//         res.setHeader("Content-Type", "application/json");
+//         res.json({ err: err });
+//       } else {
+//         //if there is no error we then use passport to authenticate user. This ensure that registration is successful.
+//         //this authenticate() method will return a function and we need to call the returning function by passing callback function that will return successful message back to the client.
+//         passport.authenticate("local")(req, res, () => {
+//           res.statusCode = 200;
+//           res.setHeader("Content-Type", "application/json");
+//           res.json({ success: true, status: "Registration Successful!" });
+//         });
+//       }
+//     }
+//   );
+// });
 
 //login router.
 //1st we check if the user already login that is this user already authenticated. if '(!req.session.user)' means the user is not authenticated yet. 'else' means the user alreay authenticated
