@@ -214,4 +214,17 @@ router.get("/logout", (req, res, next) => {
   }
 });
 
+//week3 assignment
+router.get("/users", (req, res, next) => {
+  if (req.user.admin) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json(req.user.admin);
+  } else {
+    const err = new Error("unathorized!");
+    err.status = 401;
+    return next(err);
+  }
+});
+
 module.exports = router;

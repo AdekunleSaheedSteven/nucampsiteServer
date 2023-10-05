@@ -66,3 +66,16 @@ exports.jwtPassport = passport.use(
 
 //this is use to verify incoming user is coming from authenticated user and we use jwt to stated we are use jwt strategy.Sessions: false indicate that we are not using section
 exports.verifyUser = passport.authenticate("jwt", { session: false });
+
+//week3 assignment
+exports.verifyAdmin = (req, res, next) => {
+  const isAdmin = req.user.admin;
+  console.log(isAdmin);
+  if (isAdmin) {
+    next();
+  } else {
+    err = new Error("You are not authorized to perform this operation!");
+    err.status = 403;
+    return next(err);
+  }
+};
