@@ -4,12 +4,26 @@ const User = require("../models/user");
 const passport = require("passport");
 
 const authenticate = require("../authenticate");
+const cors = require("./cors");
 const router = express.Router();
 
 /* GET users listing. */
-router.get("/", function (req, res, next) {
-  res.send("respond with a resource");
-});
+router.get(
+  "/",
+  cors.corsWithOptions,
+  authenticate.verifyUser,
+  authenticate.verifyAdmin,
+  (req, res, next) => {
+    User.find()
+      .then((users) => {
+        (res.statusCode = 200),
+          res.setHeader("Cpntent-Type", "application/json"),
+          res.json(users);
+      })
+      .catch((err) => next(err));
+    // res.send("respond with a resource");
+  }
+);
 
 // //sign up router
 // //this endpoint will allow a new user to register on our website. After the path argument then we need to pass the middleware function as an argument.
@@ -50,7 +64,7 @@ router.get("/", function (req, res, next) {
 //res.statusCode = 500 means internal server error so user know error is not from them it is error from the server.
 //send back json object error to the client like this: res.json({ err: err }). This will provide information about the error.
 
-router.post("/signup", (req, res) => {
+router.post("/signup", cors.corsWithOptions, (req, res) => {
   User.register(
     new User({ username: req.body.username }),
     req.body.password,
@@ -186,23 +200,28 @@ router.post("/signup", (req, res) => {
 
 //here we are using localStrategy to authenticate the user
 //once the user is authenticate then we issue a token for the issue.We use getToken() method we export from authenticate module and pass it an object that contains the payload.
-router.post("/login", passport.authenticate("local"), (req, res) => {
-  const token = authenticate.getToken({ _id: req.user._id });
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "application/json");
-  res.json({
-    success: true,
-    token: token,
-    status: "You are successfully logged in!",
-  });
-});
+router.post(
+  "/login",
+  cors.corsWithOptions,
+  passport.authenticate("local"),
+  (req, res) => {
+    const token = authenticate.getToken({ _id: req.user._id });
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json({
+      success: true,
+      token: token,
+      status: "You are successfully logged in!",
+    });
+  }
+);
 
 //Log out router
 //we need to tell the server to stop tracking the session after user has log out.
 //'if (req.session)' if a session exist then use destroy() method req.session.destroy() to destroy the session tracking and clearCookie() method clearCookie("session-id") to clear the cookies and then use redirect() method to redirect to the main page.
 //otherwise if session is not exist send the error message to the client to tell client it is not login
 
-router.get("/logout", (req, res, next) => {
+router.get("/logout", cors.corsWithOptions, (req, res, next) => {
   if (req.session) {
     req.session.destroy();
     res.clearCookie("session-id");
@@ -215,7 +234,8 @@ router.get("/logout", (req, res, next) => {
 });
 
 //week3 assignment
-router.get("/users", (req, res, next) => {
+//cors.corsWithOptions: this is not used in the lecture video but I used it since it apply to other routers
+router.get("/users", cors.corsWithOptions, (req, res, next) => {
   if (req.user.admin) {
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
