@@ -1,4 +1,93 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+// var app = require("../app");
+// var debug = require("debug")("nucampsiteserver:server");
+// var http = require("http");
+
+// /**
+//  * Get port from environment and store in Express.
+//  */
+
+// var port = normalizePort(process.env.PORT || "3000");
+// app.set("port", port);
+
+// /**
+//  * Create HTTP server.
+//  */
+
+// var server = http.createServer(app);
+
+// /**
+//  * Listen on provided port, on all network interfaces.
+//  */
+
+// server.listen(port);
+// server.on("error", onError);
+// server.on("listening", onListening);
+
+// /**
+//  * Normalize a port into a number, string, or false.
+//  */
+
+// function normalizePort(val) {
+//   var port = parseInt(val, 10);
+
+//   if (isNaN(port)) {
+//     // named pipe
+//     return val;
+//   }
+
+//   if (port >= 0) {
+//     // port number
+//     return port;
+//   }
+
+//   return false;
+// }
+
+// /**
+//  * Event listener for HTTP server "error" event.
+//  */
+
+// function onError(error) {
+//   if (error.syscall !== "listen") {
+//     throw error;
+//   }
+
+//   var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+//   // handle specific listen errors with friendly messages
+//   switch (error.code) {
+//     case "EACCES":
+//       console.error(bind + " requires elevated privileges");
+//       process.exit(1);
+//       break;
+//     case "EADDRINUSE":
+//       console.error(bind + " is already in use");
+//       process.exit(1);
+//       break;
+//     default:
+//       throw error;
+//   }
+// }
+
+// /**
+//  * Event listener for HTTP server "listening" event.
+//  */
+
+// function onListening() {
+//   var addr = server.address();
+//   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+//   debug("Listening on " + bind);
+// }
+
+//start here
+
+//#!/usr/bin/env node
 
 /**
  * Module dependencies.
@@ -8,12 +97,18 @@ var app = require("../app");
 var debug = require("debug")("nucampsiteserver:server");
 var http = require("http");
 
+const https = require("https");
+const fs = require("fs");
+
 /**
  * Get port from environment and store in Express.
  */
-
+//Port 3000 is only use for development. In real server production, the http will run on port 80 and https will run on 443.
+//In development we don’t want to use those reserve ports so we use port 3000 for http server
+//for https server we use this: app.set('secPort', port+443); It is a way of setting up any variable that can be easily access from anywhere in Express application with corresponding method app.get()
 var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
+app.set("secPort", port + 443);
 
 /**
  * Create HTTP server.
@@ -24,10 +119,29 @@ var server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
+
+//Create https server
+//Set up private key and public certificate.
+//__dirname is pointing to current directory.
+//then we have the private key and the certificate which contain certified public key available to use for use in our Express server.
+const options = {
+  key: fs.readFileSync(__dirname + "/server.key"),
+  cert: fs.readFileSync(__dirname + "/server.cert"),
+};
+
+//Now, use the option object above to configure our server.
+const secureServer = https.createServer(options, app);
+
+//The way we start https server is also similar to how we did it for http server
+
+secureServer.listen(app.get("secPort"), () => {
+  console.log("Server listening on port", app.get("secPort"));
+});
+secureServer.on("error", onError);
+secureServer.on("listening", onListening);
 
 /**
  * Normalize a port into a number, string, or false.
