@@ -41,6 +41,7 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  facebookId: String,
 });
 
 //the plugin will add username and password to the schema.

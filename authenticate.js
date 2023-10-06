@@ -13,6 +13,8 @@ const jwt = require("jsonwebtoken");
 //import the config file that we created
 const config = require("./config.js");
 
+const FacebookTokenStrategy = require("passport-facebook-token");
+
 //use the passport.use() method to add specific strategy plugin for our passport implementation. Here we use local strategy, the local strategy instance require a verify function function. This function will verify the username and function aginst the locally stored username and password. We use the authenticate() method provided by passport-local-mongoose plugin to solve this issue. This method on user model. it will look like this: User.authenticate()
 
 exports.local = passport.use(new LocalStrategy(User.authenticate()));
@@ -79,3 +81,36 @@ exports.verifyAdmin = (req, res, next) => {
     return next(err);
   }
 };
+
+//Facebook OAuth implementation
+
+exports.facebookPassport = passport.use(
+  new FacebookTokenStrategy(
+    {
+      clientID: config.facebook.clientId,
+      clientSecret: config.facebook.clientSecret,
+    },
+    (accessToken, refreshToken, profile, done) => {
+      User.findOne({ facebookId: profile.id }, (err, user) => {
+        if (err) {
+          return done(err, false);
+        }
+        if (!err && user) {
+          return done(null, user);
+        } else {
+          user = new User({ username: profile.displayName });
+          user.facebookId = profile.id;
+          user.firstname = profile.name.givenName;
+          user.lastname = profile.name.familyName;
+          user.save((err, user) => {
+            if (err) {
+              return done(err, false);
+            } else {
+              return done(null, user);
+            }
+          });
+        }
+      });
+    }
+  )
+);
