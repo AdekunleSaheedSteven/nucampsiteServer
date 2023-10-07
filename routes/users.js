@@ -221,31 +221,31 @@ router.post(
 //'if (req.session)' if a session exist then use destroy() method req.session.destroy() to destroy the session tracking and clearCookie() method clearCookie("session-id") to clear the cookies and then use redirect() method to redirect to the main page.
 //otherwise if session is not exist send the error message to the client to tell client it is not login
 
-router.get("/logout", cors.corsWithOptions, (req, res, next) => {
-  if (req.session) {
-    req.session.destroy();
-    res.clearCookie("session-id");
-    res.redirect("/");
-  } else {
-    const err = new Error("You are not logged in!");
-    err.status = 401;
-    return next(err);
-  }
-});
+// router.get("/logout", cors.corsWithOptions, (req, res, next) => {
+//   if (req.session) {
+//     req.session.destroy();
+//     res.clearCookie("session-id");
+//     res.redirect("/");
+//   } else {
+//     const err = new Error("You are not logged in!");
+//     err.status = 401;
+//     return next(err);
+//   }
+// });
 
-//week3 assignment
-//cors.corsWithOptions: this is not used in the lecture video but I used it since it apply to other routers
-router.get("/users", cors.corsWithOptions, (req, res, next) => {
-  if (req.user.admin) {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.json(req.user.admin);
-  } else {
-    const err = new Error("unathorized!");
-    err.status = 401;
-    return next(err);
-  }
-});
+// //week3 assignment
+// //cors.corsWithOptions: this is not used in the lecture video but I used it since it apply to other routers
+// router.get("/users", cors.corsWithOptions, (req, res, next) => {
+//   if (req.user.admin) {
+//     res.statusCode = 200;
+//     res.setHeader("Content-Type", "application/json");
+//     res.json(req.user.admin);
+//   } else {
+//     const err = new Error("unathorized!");
+//     err.status = 401;
+//     return next(err);
+//   }
+// });
 
 router.get(
   "/facebook/token",

@@ -38,6 +38,7 @@ partnerRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end("PUT operation not supported on /partners");
     }
   )
@@ -75,6 +76,7 @@ partnerRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end(
         `POST operation not supported on /partner/${req.params.partnerId}`
       );

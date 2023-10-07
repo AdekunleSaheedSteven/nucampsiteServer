@@ -38,6 +38,7 @@ promotionRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end("PUT operation not supported on /promotions");
     }
   )
@@ -75,6 +76,7 @@ promotionRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end(
         `POST operation not supported on /promotions/${req.params.promotionId}`
       );

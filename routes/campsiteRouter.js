@@ -90,12 +90,12 @@ campsiteRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end(
         `POST operation not supported on /campsites/${req.params.campsiteId}`
       );
     }
   )
-  //put method before week 3 assignment
 
   .put(
     cors.corsWithOptions,
@@ -184,6 +184,7 @@ campsiteRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end(
         `PUT operation not supported on /campsites/${req.params.campsiteId}/comments`
       );
@@ -250,158 +251,111 @@ campsiteRouter
     authenticate.verifyAdmin,
     (req, res) => {
       res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
       res.end(
         `POST operation not supported on /campsites/${req.params.campsiteId}/comments/${req.params.commentId}`
       );
     }
   )
 
-  //Before week 3 assignment start here
-
-  // .put(authenticate.verifyUser, (req, res, next) => {
-  //   Campsite.findById(req.params.campsiteId)
-  //     .then((campsite) => {
-  //       if (campsite && campsite.comments.id(req.params.commentId)) {
-  //         if (req.body.rating) {
-  //           campsite.comments.id(req.params.commentId).rating = req.body.rating;
-  //         }
-  //         if (req.body.text) {
-  //           campsite.comments.id(req.params.commentId).text = req.body.text;
-  //         }
-  //         campsite
-  //           .save()
-  //           .then((campsite) => {
-  //             res.statusCode = 200;
-  //             res.setHeader("Content-Type", "application/json");
-  //             res.json(campsite);
-  //           })
-  //           .catch((err) => next(err));
-  //       } else if (!campsite) {
-  //         err = new Error(`Campsite ${req.params.campsiteId} not found`);
-  //         err.status = 404;
-  //         return next(err);
-  //       } else {
-  //         err = new Error(`Comment ${req.params.commentId} not found`);
-  //         err.status = 404;
-  //         return next(err);
-  //       }
-  //     })
-  //     .catch((err) => next(err));
-
   //week 3 question 4 first attempt start here
-  .put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Campsite.findById(req.params.campsiteId)
-      .then((campsite) => {
-        const commentToUpdate = campsite.comments.id(req.params.commentId);
-        if (campsite && campsite.commentToUpdate) {
-          if (String(commentToUpdate.author) === String(req.user._id)) {
-            if (req.body.rating) {
-              // campsite.comments.id(req.params.commentId).rating = req.body.rating;
-              commentToUpdate.rating = req.body.rating;
+  .put(
+    cors.corsWithOptions,
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Campsite.findById(req.params.campsiteId)
+        .then((campsite) => {
+          const commentToUpdate = campsite.comments.id(req.params.commentId);
+          if (campsite && campsite.commentToUpdate) {
+            if (String(commentToUpdate.author) === String(req.user._id)) {
+              if (req.body.rating) {
+                // campsite.comments.id(req.params.commentId).rating = req.body.rating;
+                commentToUpdate.rating = req.body.rating;
+              }
+              if (req.body.text) {
+                // campsite.comments.id(req.params.commentId).text = req.body.text;
+                commentToUpdate.text = req.body.text;
+              }
+              campsite
+                .save()
+                .then((campsite) => {
+                  res.statusCode = 200;
+                  res.setHeader("Content-Type", "application/json");
+                  res.json(campsite);
+                })
+                .catch((err) => next(err));
             }
-            if (req.body.text) {
-              // campsite.comments.id(req.params.commentId).text = req.body.text;
-              commentToUpdate.text = req.body.text;
-            }
-            campsite
-              .save()
-              .then((campsite) => {
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.json(campsite);
-              })
-              .catch((err) => next(err));
+          } else if (String(commentToUpdate.author) !== String(req.user._id)) {
+            const err = new Error(
+              "You are not authorized to update this comment!"
+            );
+            err.status = 403;
+            return next(err);
+          } else if (!campsite) {
+            err = new Error(`Campsite ${req.params.campsiteId} not found`);
+            err.status = 404;
+            return next(err);
+          } else {
+            err = new Error(`Comment ${req.params.commentId} not found`);
+            err.status = 404;
+            return next(err);
           }
-        } else if (String(commentToUpdate.author) !== String(req.user._id)) {
-          const err = new Error(
-            "You are not authorized to update this comment!"
-          );
-          err.status = 403;
-          return next(err);
-        } else if (!campsite) {
-          err = new Error(`Campsite ${req.params.campsiteId} not found`);
-          err.status = 404;
-          return next(err);
-        } else {
-          err = new Error(`Comment ${req.params.commentId} not found`);
-          err.status = 404;
-          return next(err);
-        }
-      })
-      .catch((err) => next(err));
+        })
+        .catch((err) => next(err));
 
-    // week 3 question 4 first attempt workshop assignment finished here
-  })
+      // week 3 question 4 first attempt workshop assignment finished here
+    }
+  )
 
   //week 3 question 4 second attempt start here
-  .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Campsite.findById(req.params.campsiteId)
-      .then((campsite) => {
-        const commentToUpdate = campsite.comments.id(req.params.commentId);
-        if (campsite && campsite.commentToUpdate) {
-          if (String(commentToUpdate.author) === String(req.user._id)) {
-            if (req.body.rating) {
-              // campsite.comments.id(req.params.commentId).rating = req.body.rating;
-              commentToUpdate.rating = req.body.rating;
+  .delete(
+    cors.corsWithOptions,
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Campsite.findById(req.params.campsiteId)
+        .then((campsite) => {
+          const commentToUpdate = campsite.comments.id(req.params.commentId);
+          if (campsite && campsite.commentToUpdate) {
+            if (String(commentToUpdate.author) === String(req.user._id)) {
+              if (req.body.rating) {
+                // campsite.comments.id(req.params.commentId).rating = req.body.rating;
+                commentToUpdate.rating = req.body.rating;
+              }
+              if (req.body.text) {
+                // campsite.comments.id(req.params.commentId).text = req.body.text;
+                commentToUpdate.text = req.body.text;
+              }
+              campsite
+                .save()
+                .then((campsite) => {
+                  res.statusCode = 200;
+                  res.setHeader("Content-Type", "application/json");
+                  res.json(campsite);
+                })
+                .catch((err) => next(err));
             }
-            if (req.body.text) {
-              // campsite.comments.id(req.params.commentId).text = req.body.text;
-              commentToUpdate.text = req.body.text;
-            }
-            campsite
-              .save()
-              .then((campsite) => {
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.json(campsite);
-              })
-              .catch((err) => next(err));
+          } else if (String(commentToUpdate.author) !== String(req.user._id)) {
+            const err = new Error(
+              "You are not authorized to update this comment!"
+            );
+            err.status = 403;
+            return next(err);
+          } else if (!campsite) {
+            err = new Error(`Campsite ${req.params.campsiteId} not found`);
+            err.status = 404;
+            return next(err);
+          } else {
+            err = new Error(`Comment ${req.params.commentId} not found`);
+            err.status = 404;
+            return next(err);
           }
-        } else if (String(commentToUpdate.author) !== String(req.user._id)) {
-          const err = new Error(
-            "You are not authorized to update this comment!"
-          );
-          err.status = 403;
-          return next(err);
-        } else if (!campsite) {
-          err = new Error(`Campsite ${req.params.campsiteId} not found`);
-          err.status = 404;
-          return next(err);
-        } else {
-          err = new Error(`Comment ${req.params.commentId} not found`);
-          err.status = 404;
-          return next(err);
-        }
-      })
-      .catch((err) => next(err));
+        })
+        .catch((err) => next(err));
 
-    // week 3 question 4 second attempt workshop assignment finished here
-  });
-
-// .delete(authenticate.verifyUser, (req, res, next) => {
-//   Campsite.findById(req.params.campsiteId)
-//     .then((campsite) => {
-//       if (campsite && campsite.comments.id(req.params.commentId)) {
-//         campsite.comments.id(req.params.commentId).remove();
-//         campsite
-//           .save()
-//           .then((campsite) => {
-//             res.statusCode = 200;
-//             res.setHeader("Content-Type", "application/json");
-//             res.json(campsite);
-//           })
-//           .catch((err) => next(err));
-//       } else if (!campsite) {
-//         err = new Error(`Campsite ${req.params.campsiteId} not found`);
-//         err.status = 404;
-//         return next(err);
-//       } else {
-//         err = new Error(`Comment ${req.params.commentId} not found`);
-//         err.status = 404;
-//         return next(err);
-//       }
-//     })
-//     .catch((err) => next(err));
-// });
+      // week 3 question 4 second attempt workshop assignment finished here
+    }
+  );
 
 module.exports = campsiteRouter;

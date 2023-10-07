@@ -71,12 +71,25 @@ exports.verifyUser = passport.authenticate("jwt", { session: false });
 
 //week3 assignment
 exports.verifyAdmin = (req, res, next) => {
-  const isAdmin = req.user.admin;
-  console.log(isAdmin);
-  if (isAdmin) {
-    next();
+  ////////// NOTE: You can make this simpler if you wish...
+  // OLD CODE:
+  /*
+    const isAdmin = req.user.admin;
+    console.log(isAdmin);
+    if (isAdmin) {
+  */
+  if (req.user.admin) {
+    ////////// END NOTE
+
+    ////////// FIX 1: You should "return" next so that you are taken outside the function.
+    // OLD CODE:    next();
+    return next();
+    ////////// END FIX 1
   } else {
-    err = new Error("You are not authorized to perform this operation!");
+    ////////// NOTE: Always best to declare new variables with either let or const.
+    // OLD CODE:    err = new Error("You are not authorized to perform this operation!");
+    const err = new Error("You are not authorized to perform this operation!");
+    ////////// END NOTE
     err.status = 403;
     return next(err);
   }
