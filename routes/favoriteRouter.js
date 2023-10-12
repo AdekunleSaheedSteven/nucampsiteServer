@@ -11,7 +11,7 @@ favoriteRouter
   .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
     Favorite.find({ user: req.user._id })
       .populate("user")
-      .populate("campsites.campsite") //because you I want to populate the individual campsite objects within the "campsites array" not the entire array.
+      .populate("campsites")
       .then((favorites) => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
@@ -58,6 +58,7 @@ favoriteRouter
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
     res.end("PUT operation not supported on /favorites");
   })
 
@@ -126,6 +127,7 @@ favoriteRouter
 
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
     res.end("PUT operation not supported on /favorites");
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
